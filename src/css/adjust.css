@@ -1,0 +1,37 @@
+.Attendance-random{
+   width:1000px;
+}
+
+/* .Request-random .MuiBox-root css-aqby9j{
+    width:1000px;
+} */
+
+.Request-random{
+    width:1000px;
+}
+
+.Leaves-random{
+    width:1000px;
+}
+
+.Claims-random{
+    width:1000px;
+}
+
+.Claims-random .MuiDivider-root MuiDivider-fullWidth css-1otblbx-MuiDivider-root{
+    display: none;
+}
+
+.MyPaySlips-random{
+    width:1000px;
+}
+
+.Holidays-random{
+    width: 1000px;
+
+}
+
+.user-profile{
+    display: flex;
+    flex-direction: row-reverse;
+}
