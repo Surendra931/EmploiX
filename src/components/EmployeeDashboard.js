@@ -26,7 +26,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import CreditScoreIcon from '@mui/icons-material/CreditScore';
 import PeopleIcon from '@mui/icons-material/People';
 import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
-import { AccountCircle, ExpandLess, ExpandMore, Password } from '@mui/icons-material';
+import { AccountCircle, ExpandLess, ExpandMore, } from '@mui/icons-material';
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
 import HouseOutlinedIcon from '@mui/icons-material/HouseOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
@@ -50,16 +50,19 @@ import Resignation from './Resignation';
  
 import MyClaims from './MyClaims';
 
-import { useLocation,useNavigate} from 'react-router-dom';
+import { Outlet, useLocation,useNavigate} from 'react-router-dom';
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
 
 const drawerWidth = 240;
 const collapsedWidth = 80;
 
 const EmployeeDashboard = () => {
 
+
   const navigate=useNavigate();
   const location = useLocation();
-
+  const userDetails=JSON.parse(getFromLocalStorage(STOREAGE_KEYS.USER_DETAILS))
   const { username, name } = location.state || {};
   
   const [currentPassword, setCurrentPassword] = useState('hello@user');
@@ -89,6 +92,8 @@ const EmployeeDashboard = () => {
     setSelectedIndex(index);
     setSelectedSubIndex(subIndex);
     if (index !== 2) { setAttendanceOpen(false); setSelectedSubIndex(-1); }
+
+    renderContent(index,subIndex);
   };
 
   const handleCheckInOut = () => {
@@ -172,15 +177,15 @@ const EmployeeDashboard = () => {
   const isNotificationPopoverOpen = Boolean(notificationAnchor);
   const notificationId = isNotificationPopoverOpen ? 'notification-popover' : undefined;
 
-  const renderContent = () => {
-    switch (selectedIndex) {
+  const renderContent = (index,subIndex) => {
+    switch (index) {
       case 0: return <LeaveBalances />;
-      case 1: return <Profile />;
+      case 1: navigate('profile');
       case 2:
-          if (selectedSubIndex===0) return <AttendanceActivity/>;
-          if (selectedSubIndex===1) return <AttendanceRequest/>;
+          if (subIndex===0) return <AttendanceActivity/>;
+          if (subIndex===1) return <AttendanceRequest/>;
         return <Attendance />;
-      case 3: return <LeaveRequests />;
+      case 3: navigate('leave-request');
       case 4: return <MyClaims />;
       case 5: return <MyPeople />;
       case 6: return <MyPaySlips />;
@@ -379,10 +384,10 @@ const EmployeeDashboard = () => {
                     <AccountCircle />
                     <div style={{ marginLeft: '8px', display: 'flex', flexDirection: 'column' }}>
                       <Typography variant="body1">
-                        {name}
+                        {userDetails.username}
                       </Typography>
                       <Typography variant="body2" color="textSecondary">
-                        {username}
+                        {userDetails.role}
                       </Typography>
                     </div>
                   </IconButton>
@@ -474,7 +479,8 @@ const EmployeeDashboard = () => {
 
         <div style={{ paddingTop:'140px'}}>
           <Grid container spacing={5}>
-            {renderContent()}
+            {/* {renderContent()} */}
+            <Outlet/>
           </Grid>
         </div>
       </div>

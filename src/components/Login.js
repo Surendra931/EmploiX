@@ -5,6 +5,8 @@ import '../css/Login.css';
 import LeftImg from '../assets/YellowDot.svg';
 import LoginImg from '../assets/LoginPageImg.svg';
 import LoginLogo from '../assets/LoginText.svg';
+import { savetoLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
 
 //import ForgotPassword from './ForgotPassword'
 
@@ -34,7 +36,9 @@ const Login = () => {
       //console.log(data); 
   
       if (response.ok) {
-        navigate('/leave-balance', { state: { username, name: data.name } });
+         savetoLocalStorage(STOREAGE_KEYS.TOKEN,data.Token);
+         savetoLocalStorage(STOREAGE_KEYS.USER_DETAILS,JSON.stringify(data.results));
+        navigate('/dashboard');
       } else {
         setError('Invalid username or password');
       }

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Grid, Table, TableBody, TableCell, TableHead, TableRow, Link, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
+import axios from 'axios';
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -29,8 +31,59 @@ const CardBody = styled(Typography)({
 });
 
 const LeaveBalances = () => {
+  const [leaveData, setLeaveData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // useEffect(() => {
+  //   const fetchLeaveData = async () => {
+  //     try {
+  //       const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/leave-balance', {
+  //         method:'GET',
+  //         headers: {
+  //           accept: 'application/json',
+  //           'Content-Type': 'application/json',
+  //           'url':'staging.stellarhrm.com',
+  //         },
+  //       });
+  //       setLeaveData(response.data);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       setError(err.message);
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchLeaveData();
+  // }, []);
+
+   
+   const fetchLeaveData = async () => {
+    try {
+      setLoading(true);
+      const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      console.log(token)
+      const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/leave-balance', {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}` ,
+          'url':'staging.stellarhrm.com',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch leave balance:", error);
+      throw error;
+    }finally{
+      setLoading(false);
+    }
+  };
+
+    useEffect(()=>{
+      fetchLeaveData();
+    },[]);
+
   return (
-    
     <Grid container spacing={3}>
       {/* Row 1 */}
       <Grid item xs={12} sm={6} md={6}>
@@ -47,7 +100,7 @@ const LeaveBalances = () => {
                       color: '#FFCC00',
                       fontWeight: 600,
                       textDecoration: 'none',
-                      fontSize: '1.25rem', // Match the font size with CardHeader
+                      fontSize: '1.25rem',
                     }}
                   >
                     Apply Leave
@@ -67,9 +120,28 @@ const LeaveBalances = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={4} style={{ textAlign: 'center' }}>No Leaves Found</TableCell>
-                  </TableRow>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} style={{ textAlign: 'center' }}>Loading...</TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={4} style={{ textAlign: 'center' }}>Error: {error}</TableCell>
+                    </TableRow>
+                  ) : leaveData.length > 0 ? (
+                    leaveData.map((leave, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{leave.type}</TableCell>
+                        <TableCell>{leave.total}</TableCell>
+                        <TableCell>{leave.utilized}</TableCell>
+                        <TableCell>{leave.available}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} style={{ textAlign: 'center' }}>No Leaves Found</TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </Box>
@@ -104,7 +176,6 @@ const LeaveBalances = () => {
                   <TableCell style={{ fontWeight: 400 }}>25/12/2024</TableCell>
                   <TableCell style={{ fontWeight: 400 }}>CHRISTMAS</TableCell>
                 </TableRow>
-                {/* Add more holidays as needed */}
               </TableBody>
             </Table>
           </StyledCardContent>
@@ -122,7 +193,6 @@ const LeaveBalances = () => {
         </StyledCard>
       </Grid>
     </Grid>
-    
   );
 };
 

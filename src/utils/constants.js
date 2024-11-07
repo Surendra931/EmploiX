@@ -1,0 +1,1 @@
+export const STOREAGE_KEYS={TOKEN:'token',USER_DETAILS:'user-details'}
