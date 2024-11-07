@@ -35,22 +35,7 @@ import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useMediaQuery } from '@mui/material';
-
-import LeaveBalances from './LeaveBalances';
-import Profile from './Profile';
-import Attendance from './Attendance';
-import AttendanceActivity from './AttendanceActivity';
-import AttendanceRequest from './AttendanceRequest';
-import LeaveRequests from './LeaveRequest';
-import MyPeople from './MyPeople';
-import MyPaySlips from './MyPaySlips';
-import Holidays from './Holidays';
-import WorkFromHome from './WorkFromHome';
-import Resignation from './Resignation';
- 
-import MyClaims from './MyClaims';
-
-import { Outlet, useLocation,useNavigate} from 'react-router-dom';
+import { Outlet,useNavigate} from 'react-router-dom';
 import { getFromLocalStorage } from '../utils/utils';
 import { STOREAGE_KEYS } from '../utils/constants';
 
@@ -59,19 +44,9 @@ const collapsedWidth = 80;
 
 const EmployeeDashboard = () => {
 
-
   const navigate=useNavigate();
-  const location = useLocation();
-  const userDetails=JSON.parse(getFromLocalStorage(STOREAGE_KEYS.USER_DETAILS))
-  const { username, name } = location.state || {};
-  
-  const [currentPassword, setCurrentPassword] = useState('hello@user');
-  const [oldPasswordInput, setOldPasswordInput] = useState('');
-  const [newPasswordInput, setNewPasswordInput] = useState('');
-  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
-  const [message, setMessage] = useState('');
-  const [showForm, setShowForm] = useState(false);
 
+  const userDetails=JSON.parse(getFromLocalStorage(STOREAGE_KEYS.USER_DETAILS));
   const [open, setOpen] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedSubIndex,setSelectedSubIndex]=useState(-1);
@@ -110,32 +85,6 @@ const EmployeeDashboard = () => {
     navigate('/')
   }
 
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Check if old password matches the mock current password
-    if (oldPasswordInput !== currentPassword) {
-        setMessage("Current password is incorrect");
-        return;
-    }
-
-    // Check if new passwords match
-    if (newPasswordInput !== confirmPasswordInput) {
-        setMessage("New passwords don't match");
-        return;
-    }
-
-    // Simulate password change by updating the currentPassword state
-    setCurrentPassword(newPasswordInput);
-    setMessage("Password changed successfully!");
-
-    // Clear the form
-    setOldPasswordInput('');
-    setNewPasswordInput('');
-    setConfirmPasswordInput('');
-};
-
   useEffect(() => {
     const interval = setInterval(() => {
       if (!checkedIn) {
@@ -148,7 +97,6 @@ const EmployeeDashboard = () => {
   const toggleAttendance = () => {
     setAttendanceOpen(!attendanceOpen);
   };
-
 
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -179,20 +127,43 @@ const EmployeeDashboard = () => {
 
   const renderContent = (index,subIndex) => {
     switch (index) {
-      case 0: return <LeaveBalances />;
+      case 0: navigate('leave-balance');
+              break;
       case 1: navigate('profile');
+              break;
       case 2:
-          if (subIndex===0) return <AttendanceActivity/>;
-          if (subIndex===1) return <AttendanceRequest/>;
-        return <Attendance />;
-      case 3: navigate('leave-request');
-      case 4: return <MyClaims />;
-      case 5: return <MyPeople />;
-      case 6: return <MyPaySlips />;
-      case 7: return <WorkFromHome />;
-      case 8: return <Resignation />;
-      case 9: return <Holidays />;
-      default: return <LeaveBalances />;
+          if (subIndex===0) {
+            navigate('attendance-activity');
+            break;
+          } 
+          if (subIndex===1) {
+            navigate('attendance-request');
+            break;
+          }
+          navigate('attendance');
+          break;
+      case 3: 
+            navigate('leave-request');
+            break;
+      case 4: 
+            navigate('myclaims');
+            break;
+      case 5: 
+            navigate('mypeople');
+            break;
+      case 6: 
+            navigate('mypayslips');
+              break;
+      case 7: 
+            navigate('workfromhome');
+            break;
+      case 8: 
+            navigate('resignation');
+            break;
+      case 9: 
+            navigate('holidays');
+            break;
+      default: navigate('leave-balance');
     }
   };
 
@@ -335,14 +306,11 @@ const EmployeeDashboard = () => {
                 {checkedIn ? (hovered ? 'Check-Out' : `Checked In At ${checkInTime}`) : `Check-In - ${currentTime}`}
               </Button>
               </div>
-              {/* <IconButton onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{ color: '#060602',marginRight:'20px' }}>
-                <NotificationsNoneOutlinedIcon />
-              </IconButton> */}
-
+              
               <IconButton
                 aria-describedby={notificationId}
                 onClick={handleNotificationClick}
-                onMouseEnter={() => setIsHovered(true)}
+                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 style={{  marginRight: '10px' }}
               >
@@ -374,11 +342,6 @@ const EmployeeDashboard = () => {
                 </Box>
               </Popover>
 
-              {/* <IconButton style={{ color: '#060602',marginRight:'32px' }}>
-                <AccountCircle style={{ color: hovered ? '#FF5722' : '#060602' }} />
-              </IconButton> */}
-
-              
                 <Button aria-describedby={id} onClick={handleClick}>
                   <IconButton style={{ marginRight: '32px', display: 'flex', alignItems: 'center' }}>
                     <AccountCircle />
@@ -410,13 +373,13 @@ const EmployeeDashboard = () => {
                   >
                   
                   <Box sx={{ display: 'flex', alignItems: 'center', p: 0.75,cursor: 'pointer' }}
-                    onClick={() => setShowForm(!showForm)}
+                    onClick={() => navigate('/change-password')}
                   >
                   <SettingsIcon sx={{ mr: 1 }} />
                     <Typography>Change Password</Typography>
                   </Box>
 
-                  {showForm && (
+                  {/* {showForm && (
                 <form onSubmit={handleSubmit}>
                     <TextField
                         fullWidth
@@ -462,7 +425,7 @@ const EmployeeDashboard = () => {
                         </Typography>
                     )}
                 </form>
-                )}
+                )} */}
 
                   <Box 
                   sx={{ display: 'flex', alignItems: 'center', p: 0.75 ,cursor: 'pointer'}}

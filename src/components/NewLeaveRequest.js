@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -15,31 +15,28 @@ import axios from 'axios';
 
 import { getFromLocalStorage } from '../utils/utils';
 import { STOREAGE_KEYS } from '../utils/constants';
+import { useNavigate } from 'react-router-dom';
 
-const NewLeaveRequest = ({ onSubmit, onCancel }) => {
+const NewLeaveRequest = () => {
   const [leaveType, setLeaveType] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [reason, setReason] = useState('');
-  const [loading, setLoading] = useState(false); // For loading state
+  const [loading, setLoading] = useState(false); 
+  const [leaveRequests, setLeaveRequests] = useState([]);
 
+  const navigate=useNavigate();
   const handleSubmit = async () => {
-    // Prepare request data
+    
     const newRequest = {
-      // leave_id: 0, 
-      // from_date: startDate ? startDate.toISOString().split('T')[0] : '', // Convert date to string
-      // to_date: endDate ? endDate.toISOString().split('T')[0] : '', // Convert date to string
-      // reason,
-      // document_file_name: '', // Optional, depending on your requirements
-      // document_file_path: '', // Optional, depending on your requirements
-      leave_type_name: leaveType,
-      leave_days: 2,
-      paid: 0,
-      attachment: 1
+      leave_id: leaveType,
+      from_date: startDate,
+      to_date: endDate,
+      reason: reason,
     };
 
     try {
-      setLoading(true); // Set loading state to true while making the API call
+      setLoading(true); 
       const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
       const response = await axios.post(
         'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/create',
@@ -53,19 +50,42 @@ const NewLeaveRequest = ({ onSubmit, onCancel }) => {
           },
         }
       );
-
-      // Handle success
-      console.log(response.data);
-      // Optionally pass response data back to parent if necessary
-      onSubmit(response.data);
+      navigate('/dashboard/leave-request')
+      // onSubmit(response.data);
     } catch (error) {
-      // Handle error
+      
       console.error('Error submitting leave request:', error);
       alert('There was an error submitting your leave request. Please try again.');
     } finally {
-      setLoading(false); // Reset loading state after the request
+      setLoading(false); 
     }
   };
+
+  useEffect(() => {
+    const fetchLeavesData = async () => {
+      try {
+        const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+        const response = await axios.get(
+          'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/my-leaves',
+          { 
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'url':'staging.stellarhrm.com',
+            'Authorization': `Bearer ${token}` 
+            } }
+        );
+        //const data=await response.json();
+        setLeaveRequests(response.data.rows??[]);
+        console.log(response);
+
+      } catch (error) {
+        console.error('Error Fetching Leaves:', error);
+      }
+    };
+
+    fetchLeavesData();
+  }, []);
 
   return (
     <>
@@ -82,10 +102,11 @@ const NewLeaveRequest = ({ onSubmit, onCancel }) => {
             onChange={(e) => setLeaveType(e.target.value)}
             sx={{ width: '200px', '& .MuiSvgIcon-root': { color: 'blueviolet' }}}
           >
-            <MenuItem value="Sick Leave">Sick Leave</MenuItem>
-            <MenuItem value="Casual Leave">Casual Leave</MenuItem>
-            <MenuItem value="Earned Leave">Earned Leave</MenuItem>
-            <MenuItem value="Other">Other</MenuItem>
+            {leaveRequests?.map((request) => (
+            <MenuItem key={request.leave_id} value={request.leave_id}>
+              {request.leave_type}
+            </MenuItem>
+          ))}
           </TextField>
 
           <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -120,7 +141,7 @@ const NewLeaveRequest = ({ onSubmit, onCancel }) => {
           <Button
             variant="outlined"
             startIcon={<CancelIcon />}
-            onClick={onCancel}
+            onClick={() => navigate('/dashboard/leave-request')}
             sx={{ color: 'red', borderColor: 'red', mr: 1 }}
           >
             Cancel
@@ -133,7 +154,7 @@ const NewLeaveRequest = ({ onSubmit, onCancel }) => {
               backgroundColor: '#4CAF50',
               '&:hover': { backgroundColor: '#45A049' },
             }}
-            disabled={loading} // Disable button while loading
+            disabled={loading} 
           >
             {loading ? 'Creating...' : 'Create'}
           </Button>

@@ -8,14 +8,12 @@ import LoginLogo from '../assets/LoginText.svg';
 import { savetoLocalStorage } from '../utils/utils';
 import { STOREAGE_KEYS } from '../utils/constants';
 
-//import ForgotPassword from './ForgotPassword'
-
 const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  //const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  
 
   const handleLogin = async () => {
     try {
@@ -25,7 +23,7 @@ const Login = () => {
           'accept': 'application/json',
           'Content-Type': 'application/json',
           'url':'staging.stellarhrm.com',
-        },
+        }, 
         body: JSON.stringify({
           username: username,
           password: password, 
@@ -46,18 +44,7 @@ const Login = () => {
       console.error('Login error:', error);
       setError('An error occurred during login. Please try again.');
     }
-  };///API
-
-
-  // const handleForgotPasswordOpen = () => {
-  //   setIsForgotPasswordOpen(true);
-  // };
-
-  // const handleForgotPasswordClose = () => {
-  //   setIsForgotPasswordOpen(false);
-  // };
-
- 
+  };
 
   return (
     <Grid container className="root">
@@ -116,7 +103,6 @@ const Login = () => {
           </Button>
         </Box>
       </Grid>
-      {/* <ForgotPassword open={isForgotPasswordOpen} onClose={handleForgotPasswordClose} /> */}
     </Grid>
   );
 };

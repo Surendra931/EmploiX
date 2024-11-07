@@ -40,10 +40,10 @@ const ForgotPassword = () => {
         <Button
           variant="contained"
           sx={{
-            backgroundColor: '#FFCC00', // Set button color to #FFCC00
-            color: '#000', // Set text color to black (or adjust as needed)
+            backgroundColor: '#FFCC00', 
+            color: '#000', 
             '&:hover': {
-              backgroundColor: '#FFCC00', // Optional: Darken button on hover
+              backgroundColor: '#FFCC00', 
             },
           }}
           fullWidth

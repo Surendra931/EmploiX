@@ -27,7 +27,7 @@ const LeaveRequests = () => {
       try {
         const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
         const response = await axios.get(
-          'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/LeaveType/list',
+          'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/list',
           { 
           headers: {
             'accept': 'application/json',
@@ -83,11 +83,11 @@ const LeaveRequests = () => {
               ) : (
                 leaveRequests?.map((request, index) => (
                   <TableRow key={index}>
-                    <TableCell>{request.leave_type_name}</TableCell>
-                    <TableCell>{request.startDate}</TableCell>
-                    <TableCell>{request.endDate}</TableCell>
-                    <TableCell>{request.leave_days}</TableCell>
-                    <TableCell>{request.status}</TableCell>
+                    <TableCell>{request.leave_type}</TableCell>
+                    <TableCell>{request.from_date}</TableCell>
+                    <TableCell>{request.to_date}</TableCell>
+                    <TableCell>{request.requested_days}</TableCell>
+                    <TableCell>{request.leave_status}</TableCell>
                     <TableCell>{request.reason}</TableCell>
                   </TableRow>
                 ))

@@ -193,20 +193,3 @@ export default function Dashboard(props) {
   );
 }
 
-
-// -------------------------------
-// <Route path="/forgot-password" element={<ForgotPassword />} /> 
-//         <Route path="/leave-balances" element={<LeaveBalances/>} /> 
-//         <Route path="/profile" element={<Profiles />} /> 
-//         <Route path='/attendance' element={<Attendance />} /> 
-//         <Route path="/attendance/activity" element={<AttendanceActivity />} /> 
-//         <Route path="/attendance/request" element={<AttendanceRequest />} /> 
-//         <Route path='/newattendacerequest' element={<NewAttendanceRequest/>} />
-//         <Route path="/leave-requests" element={<LeaveRequests/>} /> 
-//         <Route path="/myclaims" element={<MyClaims />} /> 
-//         <Route path='/mypeople' element={<MyPeople/>} />
-//         <Route path="/mypayslips" element={<MyPaySlips />} /> 
-//         <Route path='/workfromhome' element={<WorkFromHome/>} />
-//         <Route path="/resignation" element={<Resignation />} /> 
-//         <Route path='/holidays' element={<Holidays/>} />
-// -------------------------------------------------------------

@@ -5,6 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import axios from 'axios';
 import { getFromLocalStorage } from '../utils/utils';
 import { STOREAGE_KEYS } from '../utils/constants';
+import { useNavigate } from 'react-router-dom';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -32,6 +33,7 @@ const CardBody = styled(Typography)({
 
 const LeaveBalances = () => {
   const [leaveData, setLeaveData] = useState([]);
+  const navigate=useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -62,7 +64,7 @@ const LeaveBalances = () => {
     try {
       setLoading(true);
       const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
-      console.log(token)
+      // console.log(token)
       const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/leave-balance', {
         headers: {
           'accept': 'application/json',
@@ -70,7 +72,7 @@ const LeaveBalances = () => {
           'url':'staging.stellarhrm.com',
         },
       });
-      return response.data;
+      setLeaveData( response.data);
     } catch (error) {
       console.error("Failed to fetch leave balance:", error);
       throw error;
@@ -95,7 +97,7 @@ const LeaveBalances = () => {
               <Box display="flex" alignItems="center">
                 <CardBody variant="body2">
                   <Link
-                    href="/apply-leave"
+                    onClick={() => navigate('/dashboard/new-leave-request')}
                     style={{
                       color: '#FFCC00',
                       fontWeight: 600,
@@ -131,10 +133,10 @@ const LeaveBalances = () => {
                   ) : leaveData.length > 0 ? (
                     leaveData.map((leave, index) => (
                       <TableRow key={index}>
-                        <TableCell>{leave.type}</TableCell>
-                        <TableCell>{leave.total}</TableCell>
-                        <TableCell>{leave.utilized}</TableCell>
-                        <TableCell>{leave.available}</TableCell>
+                        <TableCell>{leave.LeaveType?.leave_type_name}</TableCell>
+                        <TableCell>{leave.total_leaves_count}</TableCell>
+                        <TableCell>{leave.utilized_leaves_count}</TableCell>
+                        <TableCell>{leave.available_leaves_count}</TableCell>
                       </TableRow>
                     ))
                   ) : (
