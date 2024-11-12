@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Box,
   Typography,
@@ -16,13 +17,49 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 import '../css/adjust.css';
- 
-const MyPaySlips = () => {
-  const [selectedDate, setSelectedDate] = React.useState(null);
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
 
-  const PaySlipsData = []; 
+const MyPaySlips = () => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [paySlipsData, setPaySlipsData] = useState([]);
+  const [loading, setLoading] = useState(false); 
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+        const response = await axios.get(
+          'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api//Payslip/employees/list',
+          {
+            headers: {
+              accept: 'application/json',
+              Authorization: `Bearer ${token}`,
+              url: 'staging.stellarhrm.com',
+            },
+          }
+        );
+        setPaySlipsData(response.data);
+      } catch (error) {
+        console.error("Failed to fetch pay slips data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Filter data based on selected month and year
+  const filteredData = paySlipsData.filter((payslip) => {
+    if (!selectedDate) return true;
+    const selectedMonth = selectedDate.getMonth() + 1;
+    const selectedYear = selectedDate.getFullYear();
+    return payslip.month === selectedMonth && payslip.year === selectedYear;
+  });
+
   return (
-    
     <div className="MyPaySlips-random">
       <Box sx={{ p: 3, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -56,17 +93,23 @@ const MyPaySlips = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {PaySlipsData.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={2} align="center">
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              ) : filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2} align="center">
                     No data found
                   </TableCell>
                 </TableRow>
               ) : (
-                PaySlipsData.map((record, index) => (
+                filteredData.map((request, index) => (
                   <TableRow key={index}>
-                    <TableCell>{record.month}</TableCell>
-                    <TableCell>{record.year}</TableCell>
+                    <TableCell>{request.month}</TableCell>
+                    <TableCell>{request.year}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -75,7 +118,6 @@ const MyPaySlips = () => {
         </TableContainer>
       </Box>
     </div>
-    
   );
 };
 

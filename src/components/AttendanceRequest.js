@@ -13,7 +13,7 @@ import {
   Button,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import NewAttendanceRequest from './NewAttendanceRequest'; 
+
 import '../css/adjust.css'
  
 import { useNavigate } from 'react-router-dom';
@@ -23,9 +23,7 @@ const AttendanceRequest = () => {
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [attendanceData, setAttendanceData] = useState([]);
   const navigate=useNavigate();
-  const handleCreateNewClick = () => {
-    navigate('/newattendacerequest');
-  };
+  
 
   const handleDataSubmit = (newRecord) => {
     setAttendanceData([...attendanceData, newRecord]);
@@ -42,7 +40,7 @@ const AttendanceRequest = () => {
               variant="contained"
               sx={{ backgroundColor: '#FFCC00', '&:hover': { backgroundColor: '#FFC107' } }}
               startIcon={<AddIcon />}
-              onClick={handleCreateNewClick}
+              onClick={()=>navigate('/dashboard/new-attendance-request')}
             >
               Create New
             </Button>

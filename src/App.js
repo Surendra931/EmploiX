@@ -21,6 +21,8 @@ import Resignation from './components/Resignation';
 import Holidays from './components/Holidays';
 import NewResignation from './components/NewResignation';
 import ChangePassword from './components/ChangePassword';
+import NewClaimRequest from './components/NewClaimRequest';
+import NewWorkFromHomeRequest from './components/NewWorkFromHomeRequest';
  
 function App() {
   return (
@@ -37,14 +39,16 @@ function App() {
             <Route path='attendance' element={<Attendance/>} /> 
             <Route path="attendance-activity" element={<AttendanceActivity />} /> 
             <Route path="attendance-request" element={<AttendanceRequest />} /> 
-            <Route path='newattendacerequest' element={<NewAttendanceRequest/>} />
+            <Route path='new-attendance-request' element={<NewAttendanceRequest/>} />
           
             <Route path="myclaims" element={<MyClaims />} /> 
+            <Route path='new-claims' element={<NewClaimRequest/>} />
             <Route path='mypeople' element={<MyPeople/>} />
             <Route path="mypayslips" element={<MyPaySlips />} /> 
             <Route path='workfromhome' element={<WorkFromHome/>} />
+            <Route path='new-work-from-home' element={<NewWorkFromHomeRequest/>} />
             <Route path="resignation" element={<Resignation />} />
-            <Route path='newattendacerequest' element={<NewResignation/>} /> 
+            <Route path='new-resignation' element={<NewResignation/>} /> 
             <Route path='holidays' element={<Holidays/>} />
           </Route>
         <Route path="/forgot-password" element={<ForgotPassword />} /> 

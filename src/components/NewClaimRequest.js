@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+import axios from 'axios';
 import {
   Box,
   Typography,
@@ -12,15 +13,19 @@ import CheckIcon from '@mui/icons-material/Check';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
  
-
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
+import { useNavigate } from 'react-router-dom';
 
 
 const NewClaimRequest = ({ onSubmit, onCancel }) => {
   const [claimType, setClaimType] = useState('');
   const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
   const [comments, setComments] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
-
+  const [claimTypeData, setClaimTypeData] = useState([]);
+  const navigate=useNavigate();
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -32,17 +37,65 @@ const NewClaimRequest = ({ onSubmit, onCancel }) => {
     setUploadedFile(null);
   };
 
-  const handleSubmit = () => {
-    const newClaim = {
-      claimType,
-      date: new Date().toLocaleDateString(),
-      amount,
-      comments,
-      status: 'Pending', 
+  const handleSubmit = async () => {
+    const newRequest = {
+    claim_type_id:claimType,
+    amount: amount,
+    comments: comments,
+    uploadedFile: uploadedFile,
     };
 
-    onSubmit(newClaim);
+    try {
+      setLoading(true); 
+      const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.post(
+        'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Claim/create',
+        newRequest,
+        {
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json',
+            'url':'staging.stellarhrm.com',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      navigate('/dashboard/myclaims')
+      // onSubmit(response.data);
+    } catch (error) {
+      
+      console.error('Error submitting leave request:', error);
+      alert('There was an error submitting your leave request. Please try again.');
+    } finally {
+      setLoading(false); 
+    }
   };
+  
+  useEffect(() => {
+    const fetchClaimsType = async () => {
+      try {
+        const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+        const response = await axios.get(
+          'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/ClaimType/list',
+          { 
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'url':'staging.stellarhrm.com',
+            'Authorization': `Bearer ${token}` 
+            } }
+        );
+        //const data=await response.json();
+        setClaimTypeData(response.data.rows??[]);
+        console.log(response);
+
+      } catch (error) {
+        console.error('Error Fetching Leaves:', error);
+      }
+    };
+
+    fetchClaimsType();
+  }, []);
 
   return (
 
@@ -50,18 +103,18 @@ const NewClaimRequest = ({ onSubmit, onCancel }) => {
       <Typography variant="h6" mb={2}>New Claim Request</Typography>
 
       <TextField
-        select
-        label="Claim Type"
-        value={claimType}
-        onChange={(e) => setClaimType(e.target.value)}
-        sx={{ mb: 2, width: '200px',paddingRight:'10px' ,
-            '& .MuiSvgIcon-root': { color: 'blueviolet' }, 
-          }}
-      >
-        <MenuItem value="Medical">Medical</MenuItem>
-        <MenuItem value="Travel">Travel</MenuItem>
-        <MenuItem value="Other">Other</MenuItem>
-      </TextField>
+            select
+            label="Claim Type"
+            value={claimType}
+            onChange={(e) => setClaimType(e.target.value)}
+            sx={{ width: '200px',paddingRight:'10px', '& .MuiSvgIcon-root': { color: 'blueviolet' }}}
+          >
+            {claimTypeData?.map((request) => (
+            <MenuItem key={request.name} value={request.claim_type_id}>
+              {request.name}
+            </MenuItem>
+          ))}
+          </TextField>
 
       <TextField
         label="₹Amount"
@@ -116,7 +169,7 @@ const NewClaimRequest = ({ onSubmit, onCancel }) => {
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="outlined"
-          onClick={onCancel}
+          onClick={()=>navigate('/dashboard/myclaims')}
           sx={{ color: 'red', borderColor: 'red', mr: 1 }}
           startIcon={<CancelIcon />}
         >

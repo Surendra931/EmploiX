@@ -36,7 +36,7 @@ const Login = () => {
       if (response.ok) {
          savetoLocalStorage(STOREAGE_KEYS.TOKEN,data.Token);
          savetoLocalStorage(STOREAGE_KEYS.USER_DETAILS,JSON.stringify(data.results));
-        navigate('/dashboard');
+        navigate('/dashboard/leave-balance');
       } else {
         setError('Invalid username or password');
       }

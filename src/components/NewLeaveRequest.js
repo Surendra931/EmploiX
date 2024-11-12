@@ -26,6 +26,7 @@ const NewLeaveRequest = () => {
   const [leaveRequests, setLeaveRequests] = useState([]);
 
   const navigate=useNavigate();
+  
   const handleSubmit = async () => {
     
     const newRequest = {

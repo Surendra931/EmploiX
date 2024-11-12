@@ -1,27 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
-  Drawer,
-  AppBar,
-  Toolbar,
-  Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-  CssBaseline,
-  Button,
-  Collapse,
-  Grid,
-  TextField,
-  Popover,
-  Box,
+  Drawer,AppBar,Toolbar,Typography,List,ListItem,ListItemIcon,ListItemText,IconButton,CssBaseline,Button,Collapse,Grid,Popover,Box,
 } from '@mui/material';
 import XIcon from '@mui/icons-material/X';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import GroupsIcon from '@mui/icons-material/Groups';
 import DatasetIcon from '@mui/icons-material/Dataset';
+
 import CancelIcon from '@mui/icons-material/Cancel';
 import CreditScoreIcon from '@mui/icons-material/CreditScore';
 import PeopleIcon from '@mui/icons-material/People';
@@ -38,6 +25,7 @@ import { useMediaQuery } from '@mui/material';
 import { Outlet,useNavigate} from 'react-router-dom';
 import { getFromLocalStorage } from '../utils/utils';
 import { STOREAGE_KEYS } from '../utils/constants';
+import { format } from 'date-fns';
 
 const drawerWidth = 240;
 const collapsedWidth = 80;
@@ -54,6 +42,8 @@ const EmployeeDashboard = () => {
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const [checkInTime, setCheckInTime] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   const isMobile = useMediaQuery('(max-width: 600px)');
@@ -80,6 +70,8 @@ const EmployeeDashboard = () => {
       setCheckInTime(currentTime);
     }
   };
+
+  //const formattedDate = format(new Date(request.updatedAt), 'MMM dd, yyyy hh:mm a');
 
   const handleLogout=()=>{
     navigate('/')
@@ -113,6 +105,7 @@ const EmployeeDashboard = () => {
 
   const [notificationAnchor, setNotificationAnchor] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [notification_Id,setNotification_Id]=useState('');
 
   const handleNotificationClick = (event) => {
     setNotificationAnchor(event.currentTarget);
@@ -124,6 +117,78 @@ const EmployeeDashboard = () => {
 
   const isNotificationPopoverOpen = Boolean(notificationAnchor);
   const notificationId = isNotificationPopoverOpen ? 'notification-popover' : undefined;
+
+
+  const fetchNotifications = async () => {
+    try {
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Notification/list', {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+        },
+      });
+      setNotifications(response.data.rows||[]); 
+      setLoadingNotifications(false);
+      setNotification_Id(notifications.notification_id);
+    } catch (error) {
+      console.error('Error fetching notifications', error);
+    }
+  };
+
+  useEffect(() => {
+    
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleNotificationsClick = async (notificationId) => {
+    try {
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      await axios.patch(`https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Notification/update/${notificationId}`, {
+        is_read: true},
+        {
+          headers: {
+            'accept': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'url': 'staging.stellarhrm.com',
+          },
+      });
+      fetchNotifications();
+      // setNotifications(prevNotifications =>
+      //   prevNotifications.map(notification =>
+      //     notification.id === notificationId ? { ...notification, is_read: true } : notification
+      //   )
+      // );
+
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+
+  const handleRemoveNotification = async (notificationId) => {
+    try {
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      await axios.patch(`https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Notification/update/${notificationId}`, {
+        is_active: false},
+        {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+        },
+      });
+      // setNotifications(prevNotifications =>
+      //   prevNotifications.filter(notification => notification.id !== notificationId)
+      // );
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error removing notification:', error);
+    }
+  };
 
   const renderContent = (index,subIndex) => {
     switch (index) {
@@ -307,16 +372,34 @@ const EmployeeDashboard = () => {
               </Button>
               </div>
               
+              
               <IconButton
-                aria-describedby={notificationId}
-                onClick={handleNotificationClick}
-                 onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                style={{  marginRight: '10px' }}
-              >
-                <NotificationsNoneOutlinedIcon />
-              </IconButton>
-
+              aria-describedby={notificationId}
+              onClick={handleNotificationClick}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              style={{ marginRight: '10px' }}
+            >
+              <NotificationsNoneOutlinedIcon />
+              {notifications.filter(notification=>notification.is_read === false).length > 0 &&  (//filtering notifications based on unread
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right:'10px',
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    backgroundColor: '#FFCC00',
+                    border: '1px solid rgb(255, 255, 255)',
+                    
+                  }}
+                >
+                  {/* {notifications.length} */}
+                </span>
+              )}
+            </IconButton>
+            
               <Popover
                 id={notificationId}
                 open={isNotificationPopoverOpen}
@@ -330,17 +413,72 @@ const EmployeeDashboard = () => {
                   vertical: 'top',
                   horizontal: 'right',
                 }}
-                sx={{ mt: 1, ml: 3 }} 
+                sx={{ mt: 1, ml: 3,maxHeight:'80vh',overflowY:'auto' }}
               >
-                <Box sx={{ p: 1 }}>
+                <Box sx={{ p: 1, width: '350px' }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                    Notifications (0)
+                    Notifications ({notifications.length})
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    No notifications found
-                  </Typography>
+                  {loadingNotifications ? (
+                    <Typography variant="body2" color="text.secondary">
+                      Loading notifications...
+                    </Typography>
+                  ) : notifications.length > 0 ? (
+                    notifications.map((request, index) => (
+                      <Box
+                        onClick={()=>handleNotificationsClick(request.notification_id)}
+                        key={index}
+                        sx={{
+                          mb: 2,
+                          p: 1,
+                          backgroundColor: request.is_read? '#F4F4F4':'#ADD8E6',
+                          borderRadius: 1,
+                          position: 'relative',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                          {request.message}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              backgroundColor: '#C5CCDA',
+                              marginLeft:1,
+                              borderRadius: 1,
+                            }}
+                          >
+                            {request.title}
+                          </Typography>
+                          <Typography variant="body3" color="text.secondary">
+                            {format(new Date(request.updatedAt), 'MMM dd, yyyy hh:mm a')}
+                          </Typography>
+                          <CancelIcon
+                            sx={{
+                              cursor: 'pointer',
+                              fontSize: 36, 
+                              ml: 1,
+                            }}
+                            onClick={()=>handleRemoveNotification(request.notification_id)}
+                          />
+                        </Box>
+                      </Box>
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No notifications found
+                    </Typography>
+                  )}
                 </Box>
               </Popover>
+
 
                 <Button aria-describedby={id} onClick={handleClick}>
                   <IconButton style={{ marginRight: '32px', display: 'flex', alignItems: 'center' }}>
@@ -378,54 +516,6 @@ const EmployeeDashboard = () => {
                   <SettingsIcon sx={{ mr: 1 }} />
                     <Typography>Change Password</Typography>
                   </Box>
-
-                  {/* {showForm && (
-                <form onSubmit={handleSubmit}>
-                    <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Current Password"
-                        type="password"
-                        variant="outlined"
-                        value={oldPasswordInput}
-                        onChange={(e) => setOldPasswordInput(e.target.value)}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        margin="normal"
-                        label="New Password"
-                        type="password"
-                        variant="outlined"
-                        value={newPasswordInput}
-                        onChange={(e) => setNewPasswordInput(e.target.value)}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Confirm New Password"
-                        type="password"
-                        variant="outlined"
-                        value={confirmPasswordInput}
-                        onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                        required
-                    />
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                    >
-                        Change Password
-                    </Button>
-                    {message && (
-                        <Typography color={message.includes("successfully") ? "success.main" : "error.main"} mt={2}>
-                            {message}
-                        </Typography>
-                    )}
-                </form>
-                )} */}
 
                   <Box 
                   sx={{ display: 'flex', alignItems: 'center', p: 0.75 ,cursor: 'pointer'}}

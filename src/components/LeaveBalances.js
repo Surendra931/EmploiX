@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, Typography, Grid, Table, TableBody, TableCell, TableHead, TableRow, Link, Box } from '@mui/material';
+import { Card, CardContent, Typography, Grid, Table, TableBody, TableCell, TableHead, TableRow, Link, Box,List,ListItem,Avatar,ListItemText } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import axios from 'axios';
 import { getFromLocalStorage } from '../utils/utils';
-import { STOREAGE_KEYS } from '../utils/constants';
+import { STOREAGE_KEYS } from '../utils/constants'; 
 import { useNavigate } from 'react-router-dom';
+
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -33,63 +34,89 @@ const CardBody = styled(Typography)({
 
 const LeaveBalances = () => {
   const [leaveData, setLeaveData] = useState([]);
-  const navigate=useNavigate();
+  const [holidays, setHolidays] = useState([]);
+  const [onLeave, setOnLeave] = useState([]);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // useEffect(() => {
-  //   const fetchLeaveData = async () => {
-  //     try {
-  //       const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/leave-balance', {
-  //         method:'GET',
-  //         headers: {
-  //           accept: 'application/json',
-  //           'Content-Type': 'application/json',
-  //           'url':'staging.stellarhrm.com',
-  //         },
-  //       });
-  //       setLeaveData(response.data);
-  //       setLoading(false);
-  //     } catch (err) {
-  //       setError(err.message);
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchLeaveData();
-  // }, []);
-
-   
-   const fetchLeaveData = async () => {
+ 
+  const fetchLeaveData = async () => {
     try {
       setLoading(true);
-      const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
-      // console.log(token)
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
       const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/leave-balance', {
         headers: {
           'accept': 'application/json',
-          'Authorization': `Bearer ${token}` ,
-          'url':'staging.stellarhrm.com',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
         },
       });
-      setLeaveData( response.data);
+      setLeaveData(response.data);
     } catch (error) {
       console.error("Failed to fetch leave balance:", error);
-      throw error;
-    }finally{
+      setError(error.message);
+    } finally {
       setLoading(false);
     }
   };
 
-    useEffect(()=>{
-      fetchLeaveData();
-    },[]);
+  useEffect(() => {
+    fetchLeaveData();
+  }, []);
+
+  const fetchHolidays = async () => {
+    try {
+      setLoading(true);
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/PublicHoliday/list', {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+        },
+      });
+      setHolidays(response.data.rows||[]);
+      console.log(holidays);
+    } catch (error) {
+      console.error("Failed to fetch Public Holidays:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHolidays();
+  }, []);
+
+  const fetchOnLeave = async () => {
+    try {
+      setLoading(true);
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Leave/on_leave_today', {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+        },
+      });
+      setOnLeave(response.data.rows||[]);
+      
+    } catch (error) {
+      console.error("Failed to fetch OnLeave:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOnLeave();
+  }, []);
 
   return (
     <Grid container spacing={3}>
-      {/* Row 1 */}
       <Grid item xs={12} sm={6} md={6}>
-        {/* Card A: Leave Balances */}
         <StyledCard>
           <StyledCardContent>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -152,32 +179,59 @@ const LeaveBalances = () => {
       </Grid>
 
       <Grid item xs={12} sm={6} md={6}>
-        {/* Card B: On Leave Today */}
         <StyledCard>
           <StyledCardContent>
             <CardHeader>On Leave Today</CardHeader>
             <Box component="hr" sx={{ border: '1px solid #FFCC00', margin: '8px 0' }} />
-            <CardBody>No One on Leave</CardBody>
+            <List>
+            {onLeave && onLeave.length > 0 ? (
+              onLeave.map((employee) => (
+                <ListItem key={employee.emp_code}>
+                  <Avatar
+                    sx={{ marginRight: '10px' }}
+                    src={employee.profile_pic ? 'ALT_IMG' : ''}
+                  />
+                  <ListItemText primary={`${employee.fname} ${employee.lname} (${employee.emp_code}) is on leave today`} />
+                </ListItem>
+              ))
+            ): (
+              <TableRow>
+                <TableCell colSpan={4} style={{ textAlign: 'center' }}>
+                  No one is on leave
+                </TableCell>
+              </TableRow>
+            )}
+            </List>
           </StyledCardContent>
         </StyledCard>
       </Grid>
 
-      {/* Row 2 */}
       <Grid item xs={12} sm={6} md={6}>
-        {/* Card C: Upcoming Holidays */}
         <StyledCard>
           <StyledCardContent>
             <CardHeader>Upcoming Holidays</CardHeader>
             <Table>
               <TableBody>
-                <TableRow>
-                  <TableCell style={{ fontWeight: 400 }}>31/10/2024</TableCell>
-                  <TableCell style={{ fontWeight: 400 }}>DIWALI</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell style={{ fontWeight: 400 }}>25/12/2024</TableCell>
-                  <TableCell style={{ fontWeight: 400 }}>CHRISTMAS</TableCell>
-                </TableRow>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={2} style={{ textAlign: 'center' }}>Loading...</TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={2} style={{ textAlign: 'center' }}>Error: {error}</TableCell>
+                  </TableRow>
+                ) : holidays.length > 0 ? (
+                  holidays.map((holiday, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{holiday.date}</TableCell>
+                      <TableCell>{holiday.name}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} style={{ textAlign: 'center' }}>No Holidays Found</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </StyledCardContent>
@@ -185,7 +239,6 @@ const LeaveBalances = () => {
       </Grid>
 
       <Grid item xs={12} sm={6} md={6}>
-        {/* Card D: Special Events */}
         <StyledCard>
           <StyledCardContent>
             <CardHeader>Special Events</CardHeader>

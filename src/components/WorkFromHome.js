@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+
 import {
   Box,
   Typography,
@@ -12,34 +13,58 @@ import {
   Paper,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import NewWorkFromHomeRequest from './NewWorkFromHomeRequest';
+import axios from 'axios'
 import '../css/adjust.css'
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
+import { useNavigate } from 'react-router-dom';
 
 const WorkFromHome = () => {
-  const [showNewRequest, setShowNewRequest] = useState(false);
-  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [workfromhomedata,setWorkFromHomeData]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const navigate=useNavigate();
+  
+ 
 
-  const handleCreateWorkFromHomeRequest = (newRequest) => {
-    setLeaveRequests([...leaveRequests, newRequest]);
-    setShowNewRequest(false);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+        const response = await axios.get(
+          `https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/WorkFromHome/list`,
+          {
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json',
+              url: 'staging.stellarhrm.com',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setWorkFromHomeData(response.data.rows ?? []);
+      } catch (error) {
+        console.error('Error Fetching Claims:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleCancel = () => {
-    setShowNewRequest(false);
-  };
+    fetchData();
+  },[]);
 
   return (
 
     <div className='Leaves-random'>
     <Box sx={{ p: 3, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-      {!showNewRequest ? (
+      
         <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight="bold">Work From Home Request</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setShowNewRequest(true)}
+              onClick={() => navigate('/dashboard/new-work-from-home')}
               sx={{ backgroundColor: '#FFCC00', '&:hover': { backgroundColor: '#FFC300' } }}
             >
               Create
@@ -58,16 +83,16 @@ const WorkFromHome = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {leaveRequests.length === 0 ? (
+                {workfromhomedata.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center">No Data Found</TableCell>
                   </TableRow>
                 ) : (
-                  leaveRequests.map((request, index) => (
+                  workfromhomedata.map((request, index) => (
                     <TableRow key={index}>
                       
-                      <TableCell>{request.startDate}</TableCell>
-                      <TableCell>{request.endDate}</TableCell>
+                      <TableCell>{request.from_date}</TableCell>
+                      <TableCell>{request.to_date}</TableCell>
                       <TableCell>{request.reason}</TableCell>
                       <TableCell>{request.status}</TableCell>
                      
@@ -78,12 +103,6 @@ const WorkFromHome = () => {
             </Table>
           </TableContainer>
         </>
-      ) : (
-        <NewWorkFromHomeRequest
-          onSubmit={handleCreateWorkFromHomeRequest}
-          onCancel={handleCancel}
-        />
-      )}
     </Box>
     </div>
   );

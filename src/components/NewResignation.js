@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -14,13 +16,19 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
  
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
 
 
-const NewResignation = ({ onSubmit, onCancel }) => {
+const NewResignation = () => {
   const [ResigningDate, setResigningDate] = useState(null);
   const [reason, setReason] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [leaveType, setLeaveType] = useState('');
+  
+  const [loading,setLoading]=useState(false);
 
+  const navigate=useNavigate();
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -32,13 +40,39 @@ const NewResignation = ({ onSubmit, onCancel }) => {
     setUploadedFile(null);
   };
 
-  const handleSubmit = () => {
+  
+
+  const handleSubmit = async () => {
+    
     const newRequest = {
-      date: ResigningDate ? ResigningDate.toLocaleDateString() : '',
-      reason,
+      submission_date: ResigningDate,
+      reason: reason,
     };
 
-    onSubmit(newRequest);
+    try {
+      setLoading(true); 
+      const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.post(
+        'https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Resignation/create',
+        newRequest,
+        {
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json',
+            'url':'staging.stellarhrm.com',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      navigate('/dashboard/resignation')
+      // onSubmit(response.data);
+    } catch (error) {
+      
+      console.error('Error submitting leave request:', error);
+      alert('There was an error submitting your leave request. Please try again.');
+    } finally {
+      setLoading(false); 
+    }
   };
 
   return (
@@ -58,7 +92,7 @@ const NewResignation = ({ onSubmit, onCancel }) => {
               fullWidth
               error={false}
               sx={{
-                marginBottom: '20px', // Explicit spacing added here
+                marginBottom: '20px', 
                 '& .MuiSvgIcon-root': { color: 'blueviolet' },
               }}
             />
@@ -74,7 +108,7 @@ const NewResignation = ({ onSubmit, onCancel }) => {
         onChange={(e) => setReason(e.target.value)}
         fullWidth
         sx={{
-          marginBottom: '16px', // Adjust this value for more spacing if needed
+          marginBottom: '16px', 
         }}
       />
 
@@ -108,7 +142,7 @@ const NewResignation = ({ onSubmit, onCancel }) => {
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="outlined"
-          onClick={onCancel}
+          onClick={()=> navigate('/dashboard/resignation')}
           sx={{ color: 'red', borderColor: 'red', mr: 1 }}
           startIcon={<CancelIcon />}
         >

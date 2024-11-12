@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -20,28 +20,29 @@ import {
   Button,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import EditIcon from '@mui/icons-material/Edit';  
-import DeleteIcon from '@mui/icons-material/Delete';  
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';  
-import CheckIcon from '@mui/icons-material/Check';  
-import CloseIcon from '@mui/icons-material/Close';  
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import axios from 'axios'; 
 import '../css/adjust.css';
- 
+import { getFromLocalStorage } from '../utils/utils';
+import { STOREAGE_KEYS } from '../utils/constants';
+
 
 
 const Holidays = () => {
-  const [holidays, setHolidays] = useState([
-    { id: 1, name: 'New Year\'s Day', date: '2024-01-01', status: 'Active' },
-    { id: 2, name: 'Independence Day', date: '2024-07-04', status: 'Active' },
-    { id: 3, name: 'Christmas Day', date: '2024-12-25', status: 'Active' },
-  ]);
-
+  const [holidays, setHolidays] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [editingHoliday, setEditingHoliday] = useState(null);
   const [editedName, setEditedName] = useState('');
   const [editedDate, setEditedDate] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-
+  const [fetchedData, setFetchedData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Menu click handler
   const handleMenuClick = (event, holiday) => {
     setAnchorEl(event.currentTarget);
     setEditingHoliday(holiday);
@@ -89,8 +90,30 @@ const Holidays = () => {
     handleMenuClose();
   };
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token=getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/PublicHoliday/list', {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+        },
+      });
+      setFetchedData(response.data.rows); // Assuming response.data.rows contains the holiday data
+    } catch (error) {
+      console.error("Failed to fetch holidays:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
-    
     <div className='Holidays-random'>
       <Box sx={{ p: 3, backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%', margin: '0 auto' }}>
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
@@ -108,18 +131,18 @@ const Holidays = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {holidays.map((holiday) => (
-                <TableRow key={holiday.id}>
+              {fetchedData.map((holiday) => (
+                <TableRow key={holiday.public_holiday_id}>
                   <TableCell>{holiday.name}</TableCell>
                   <TableCell>{holiday.date}</TableCell>
-                  <TableCell>{holiday.status}</TableCell>
+                  <TableCell>{holiday.is_active ? 'Active' : 'Deactivated'}</TableCell>
                   <TableCell>
                     <IconButton onClick={(e) => handleMenuClick(e, holiday)}>
                       <MoreVertIcon />
                     </IconButton>
                     <Menu
                       anchorEl={anchorEl}
-                      open={Boolean(anchorEl) && editingHoliday?.id === holiday.id}
+                      open={Boolean(anchorEl) && editingHoliday?.public_holiday_id === holiday.public_holiday_id}
                       onClose={handleMenuClose}
                     >
                       <MenuItem onClick={handleOpenDialog}>
@@ -174,7 +197,6 @@ const Holidays = () => {
         </Dialog>
       </Box>
     </div>
-    
   );
 };
 
