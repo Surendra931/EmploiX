@@ -38,14 +38,13 @@ const EmployeeDashboard = () => {
   const [open, setOpen] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedSubIndex,setSelectedSubIndex]=useState(-1);
-  const [checkedIn, setCheckedIn] = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
-  const [checkInTime, setCheckInTime] = useState('');
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [hovered, setHovered] = useState(false);
-
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkInTime, setCheckInTime] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const isMobile = useMediaQuery('(max-width: 600px)');
   const isTablet = useMediaQuery('(max-width: 960px)');
 
@@ -61,15 +60,15 @@ const EmployeeDashboard = () => {
     renderContent(index,subIndex);
   };
 
-  const handleCheckInOut = () => {
-    if (checkedIn) {
-      setCheckedIn(false);
-      setCheckInTime('');
-    } else {
-      setCheckedIn(true);
-      setCheckInTime(currentTime);
-    }
-  };
+  // const handleCheckInOut = () => {
+  //   if (checkedIn) {
+  //     setCheckedIn(false);
+  //     setCheckInTime('');
+  //   } else {
+  //     setCheckedIn(true);
+  //     setCheckInTime(currentTime);
+  //   }
+  // };
 
   //const formattedDate = format(new Date(request.updatedAt), 'MMM dd, yyyy hh:mm a');
 
@@ -82,7 +81,7 @@ const EmployeeDashboard = () => {
       if (!checkedIn) {
         setCurrentTime(new Date().toLocaleTimeString());
       }
-    }, 1000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [checkedIn]);
 
@@ -118,6 +117,50 @@ const EmployeeDashboard = () => {
   const isNotificationPopoverOpen = Boolean(notificationAnchor);
   const notificationId = isNotificationPopoverOpen ? 'notification-popover' : undefined;
 
+  useEffect(() => {
+    if (!checkedIn) {
+      const interval = setInterval(() => {
+        setCurrentTime(new Date().toLocaleTimeString());
+      }, 1000);
+      return () => clearInterval(interval); 
+    }
+  }, [checkedIn]);
+  
+  const handleCheckInOut = async () => {
+    const type = checkedIn ? 'out' : 'in';
+    const data = { type };
+    const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+    axios.post('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Attendance/checkinout',{
+      type:type,
+    },
+      {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+      .then(response => {
+        if (response.status !== 200 && response.status !== 201) {
+          throw new Error(`Server error: ${response.data.message}`);
+        }
+        return response.data;
+      })
+      .then(_data => {
+        if (type === 'in') {
+          setCheckedIn(true);
+          setCheckInTime(currentTime); 
+        } else {
+          setCheckedIn(false);
+          setCheckInTime('');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -174,7 +217,7 @@ const EmployeeDashboard = () => {
       const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
       await axios.patch(`https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Notification/update/${notificationId}`, {
         is_active: false},
-        {
+        { 
         headers: {
           'accept': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -189,6 +232,7 @@ const EmployeeDashboard = () => {
       console.error('Error removing notification:', error);
     }
   };
+
 
   const renderContent = (index,subIndex) => {
     switch (index) {
@@ -287,27 +331,27 @@ const EmployeeDashboard = () => {
 
         <div style={{ flexGrow: 1, overflowY: 'auto' ,cursor:'pointer'}}>
         <List>
-  {menuItems.map((item, index) => (
-    <React.Fragment key={index}>
-      <ListItem button onClick={() => item.subItems ? toggleAttendance() : handleMenuItemClick(index)}>
-        <ListItemIcon style={{ color: '#FFFFFF' }}>{item.icon}</ListItemIcon>
-        {open && <ListItemText primary={item.text} style={{ color: '#FFFFFF' }} />}
-        {item.subItems && (attendanceOpen ? <ExpandLess style={{ color: '#FFFFFF' }} /> : <ExpandMore style={{ color: '#FFFFFF' }} />)}
-      </ListItem>
-      {item.subItems && (
-        <Collapse in={attendanceOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {item.subItems.map((subItem, subIndex) => (
-              <ListItem button key={subIndex} onClick={() => handleMenuItemClick(index, subItem.index)}>
-                <ListItemText primary={subItem.text} style={{ color: '#FFFFFF', cursor: 'pointer' }} />
-              </ListItem>
-            ))}
+            {menuItems.map((item, index) => (
+              <React.Fragment key={index}>
+                <ListItem button onClick={() => item.subItems ? toggleAttendance() : handleMenuItemClick(index)}>
+                  <ListItemIcon style={{ color: '#FFFFFF' }}>{item.icon}</ListItemIcon>
+                  {open && <ListItemText primary={item.text} style={{ color: '#FFFFFF' }} />}
+                  {item.subItems && (attendanceOpen ? <ExpandLess style={{ color: '#FFFFFF' }} /> : <ExpandMore style={{ color: '#FFFFFF' }} />)}
+                </ListItem>
+                {item.subItems && (
+                  <Collapse in={attendanceOpen} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                      {item.subItems.map((subItem, subIndex) => (
+                        <ListItem button key={subIndex} onClick={() => handleMenuItemClick(index, subItem.index)}>
+                          <ListItemText primary={subItem.text} style={{ color: '#FFFFFF', cursor: 'pointer' }} />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Collapse>
+                )}
+              </React.Fragment>
+            ))} 
           </List>
-        </Collapse>
-      )}
-    </React.Fragment>
-  ))} 
-</List>
 
         </div>
       </Drawer>
@@ -336,7 +380,7 @@ const EmployeeDashboard = () => {
                   padding: '0',
                 }}
               >
-                <MenuOpenIcon />
+              <MenuOpenIcon />
               </IconButton>
               <Typography
                 variant="h6"
@@ -351,28 +395,31 @@ const EmployeeDashboard = () => {
               >
                 {menuItems[selectedIndex]?.text || 'Dashboard'}
               </Typography>
-              <div style={{  display: 'flex' }}>
+              
               <Button
                 variant="contained"
                 color={checkedIn ? 'warning' : 'success'}
                 onClick={handleCheckInOut}
-                style={{ 
-                  marginLeft : isMobile ?'20px':'auto',
-                  marginRight: isMobile? 0:'24px', 
-                  padding: isMobile ? ' 8px' : '16px', 
-                  width: isMobile ? '210px' : 'auto ', 
-                  height: isMobile ? '24px' : '36px', 
+                style={{
+                  marginLeft: isMobile ? '20px' : 'auto',
+                  marginRight: isMobile ? 0 : '24px',
+                  padding: isMobile ? '8px' : '16px',
+                  width: isMobile ? '210px' : 'auto',
+                  height: isMobile ? '24px' : '36px',
                   fontSize: isMobile ? '0.8rem' : 'inherit',
-                 }}
+                }}
                 startIcon={checkedIn ? <LogoutIcon /> : <LoginIcon />}
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
               >
-                {checkedIn ? (hovered ? 'Check-Out' : `Checked In At ${checkInTime}`) : `Check-In - ${currentTime}`}
+                {checkedIn ? (
+                  hovered ? 'Check-Out' : `Checked In At ${checkInTime}`
+                ) : (
+                  `Check-In - ${currentTime}`
+                )}
               </Button>
-              </div>
-              
-              
+  
+
               <IconButton
               aria-describedby={notificationId}
               onClick={handleNotificationClick}

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, Typography, Grid, Table, TableBody, TableCell, TableHead, TableRow, Link, Box,List,ListItem,Avatar,ListItemText } from '@mui/material';
+import { Card, CardContent, Typography, Grid, Table, TableBody, TableCell, TableHead, TableRow, Link, Box,List,ListItem,Avatar,ListItemText,ListItemIcon,Divider } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CakeIcon from '@mui/icons-material/Cake'; 
+import CelebrationIcon from '@mui/icons-material/Celebration'; 
 import axios from 'axios';
 import { getFromLocalStorage } from '../utils/utils';
 import { STOREAGE_KEYS } from '../utils/constants'; 
 import { useNavigate } from 'react-router-dom';
-
+ 
 
 const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -39,6 +41,41 @@ const LeaveBalances = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [events,setEvents]=useState();
+
+  interface Event {
+    emp_code: string;
+    name: string;
+    profile_pic: string | null;
+    event: string; // Added event property
+  }
+  const EventIcon: React.FC<{ event: string }> = ({ event }) => {
+    const iconStyle = {
+      New: {
+        color: '#64b5f6',
+        fontSize: '30px',
+      },
+      Birthday: {
+        color: '#ff4081',
+        fontSize: '30px',
+      },
+      '1 Year': {
+        color: '#66bb6a',
+        fontSize: '30px',
+      },
+    };
+  
+    switch (event) {
+      case 'New':
+        return <CelebrationIcon sx={iconStyle.New} />;
+      case 'Birthday':
+        return <CakeIcon sx={iconStyle.Birthday} />;
+      case '1 Year':
+        return <CelebrationIcon sx={iconStyle['1 Year']} />;
+      default:
+        return <CelebrationIcon sx={iconStyle['1 Year']} />; 
+    }
+  };
  
   const fetchLeaveData = async () => {
     try {
@@ -114,6 +151,30 @@ const LeaveBalances = () => {
     fetchOnLeave();
   }, []);
 
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const token = getFromLocalStorage(STOREAGE_KEYS.TOKEN);
+      const response = await axios.get('https://nodejs-projects-stellerhrm-dev.un7jm4.easypanel.host/api/Employee/special_events', {
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'url': 'staging.stellarhrm.com',
+        },
+      });
+      setEvents(response.data);
+      
+    } catch (error) {
+      console.error("Failed to fetch Special Events:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} sm={6} md={6}>
@@ -138,7 +199,7 @@ const LeaveBalances = () => {
                 <ChevronRightIcon style={{ color: '#FFCC00' }} />
               </Box>
             </Box>
-            <Box sx={{ overflowY: 'auto', maxHeight: '120px' }}>
+            <Box sx={{ maxHeight: '150px' }}>
               <Table>
                 <TableHead>
                   <TableRow style={{ backgroundColor: '#D3D3D3' }}>
@@ -238,15 +299,37 @@ const LeaveBalances = () => {
         </StyledCard>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={6}>
-        <StyledCard>
-          <StyledCardContent>
-            <CardHeader>Special Events</CardHeader>
-            <Box component="hr" sx={{ border: '1px solid #FFCC00', margin: '10px 0' }} />
-            <CardBody>No Events Found</CardBody>
-          </StyledCardContent>
-        </StyledCard>
-      </Grid>
+        <Grid item xs={12} sm={6} md={6}>
+          <StyledCard>
+            <StyledCardContent>
+              <CardHeader>Special Events</CardHeader>
+              <Box component="hr" sx={{ border: '1px solid #FFCC00', margin: '10px 0' }} />
+              <List>
+              {events && events.length > 0 ? (
+                events.map((employee) => (
+                  <ListItem key={employee.emp_code} sx={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
+                    <ListItemIcon>
+                      <EventIcon event={employee.event} />
+                    </ListItemIcon>
+                    <Avatar
+                      sx={{ marginRight: '10px' }}
+                      src={employee.profile_pic ? `ALT-IMG` : 'path_to_default_image'}
+                    />
+                    <ListItemText primary={`${employee.name} (${employee.emp_code})`} secondary={employee.event} />
+                  </ListItem>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} style={{ textAlign: 'center' }}>
+                    No events found
+                  </TableCell>
+                </TableRow>
+              )}
+            </List>
+            </StyledCardContent>
+          </StyledCard>
+        </Grid>
+        
     </Grid>
   );
 };
